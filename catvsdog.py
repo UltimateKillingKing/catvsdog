@@ -21,7 +21,7 @@ val_transform = transforms.Compose([
 ])
 
 # 加载验证集
-val_dir = 'test_set'
+val_dir = 'test_set1'
 val_dataset = datasets.ImageFolder(val_dir, transform=val_transform)
 
 # 重建模型 + 加载你之前的最佳权重
