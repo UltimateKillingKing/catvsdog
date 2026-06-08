@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>猫狗识别 · Cat vs Dog</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2f3d;
+      --text: #e8eaef;
+      --muted: #8b92a5;
+      --cat: #f59e0b;
+      --dog: #3b82f6;
+      --accent: #a78bfa;
+      --success: #34d399;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .bg-glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(167, 139, 250, 0.12), transparent),
+        radial-gradient(ellipse 50% 35% at 80% 80%, rgba(59, 130, 246, 0.1), transparent);
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 24px 64px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    header h1 span { color: var(--accent); }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(167, 139, 250, 0.06);
+    }
+
+    .upload-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      line-height: 1;
+    }
+
+    .upload-zone h3 {
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+    }
+
+    .upload-zone p {
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    #fileInput { display: none; }
+
+    .preview-row {
+      display: none;
+      gap: 24px;
+      align-items: flex-start;
+      margin-top: 24px;
+    }
+
+    .preview-row.visible {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .preview-img-wrap {
+      flex: 0 0 280px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .result-panel {
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .result-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .result-main {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .result-main.cat { color: var(--cat); }
+    .result-main.dog { color: var(--dog); }
+
+    .confidence-bar {
+      margin-bottom: 10px;
+    }
+
+    .confidence-bar .label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .bar-track {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .bar-fill.cat { background: var(--cat); }
+    .bar-fill.dog { background: var(--dog); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      margin-top: 16px;
+    }
+
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      margin-top: 16px;
+      margin-left: 8px;
+    }
+
+    .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+
+    .status {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      margin-top: 16px;
+    }
+
+    .status.visible { display: flex; }
+    .status.loading { background: rgba(167, 139, 250, 0.1); color: var(--accent); }
+    .status.error { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .samples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .sample-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sample-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 32px;
+    }
+
+    @media (max-width: 600px) {
+      .preview-img-wrap { flex: 1 1 100%; }
+      header h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="container">
+    <header>
+      <h1>🐱 <span>猫狗识别</span> 🐶</h1>
+      <p>基于 ResNet50 的图像分类模型 · 上传图片即可识别</p>
+    </header>
+
+    <div class="card">
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-icon">📷</div>
+        <h3>点击或拖拽图片到此处</h3>
+        <p>支持 JPG、PNG、WEBP 格式</p>
+        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/*">
+      </div>
+
+      <div class="preview-row" id="previewRow">
+        <div class="preview-img-wrap">
+          <img id="previewImg" alt="预览">
+        </div>
+        <div class="result-panel">
+          <div class="result-label">识别结果</div>
+          <div class="result-main" id="resultMain">—</div>
+
+          <div class="confidence-bar">
+            <div class="label"><span>🐱 猫</span><span id="catPct">0%</span></div>
+            <div class="bar-track"><div class="bar-fill cat" id="catBar" style="width:0%"></div></div>
+          </div>
+          <div class="confidence-bar">
+            <div class="label"><span>🐶 狗</span><span id="dogPct">0%</span></div>
+            <div class="bar-track"><div class="bar-fill dog" id="dogBar" style="width:0%"></div></div>
+          </div>
+
+          <button class="btn btn-primary" id="predictBtn" disabled>开始识别</button>
+          <button class="btn btn-ghost" id="resetBtn">换一张</button>
+        </div>
+      </div>
+
+      <div class="status loading" id="statusLoading">
+        <div class="spinner"></div>
+        <span>模型推理中，请稍候…</span>
+      </div>
+      <div class="status error" id="statusError">
+        <span id="errorMsg">识别失败</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="result-label">快速试用示例图片</div>
+      <div class="samples" id="samples"></div>
+    </div>
+
+    <footer>ResNet50 · PyTorch · 本地推理</footer>
+  </div>
+
+  <script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewRow = document.getElementById('previewRow');
+    const previewImg = document.getElementById('previewImg');
+    const resultMain = document.getElementById('resultMain');
+    const predictBtn = document.getElementById('predictBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const statusLoading = document.getElementById('statusLoading');
+    const statusError = document.getElementById('statusError');
+    const errorMsg = document.getElementById('errorMsg');
+    const catBar = document.getElementById('catBar');
+    const dogBar = document.getElementById('dogBar');
+    const catPct = document.getElementById('catPct');
+    const dogPct = document.getElementById('dogPct');
+    const samplesEl = document.getElementById('samples');
+
+    let currentFile = null;
+
+    const SAMPLE_IMAGES = [
+      { label: '示例猫', path: 'newtest_set/cats/true.jpg' },
+      { label: '示例狗', path: 'newtest_set/dogs/31723731_111324918104_2.jpg' },
+      { label: '测试猫', path: 'test_set/cats/cat.4001.jpg' },
+      { label: '测试狗', path: 'test_set/dogs/dog.4001.jpg' },
+    ];
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('dragover');
+    });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) loadFile(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) loadFile(fileInput.files[0]);
+    });
+
+    predictBtn.addEventListener('click', predict);
+    resetBtn.addEventListener('click', reset);
+
+    function loadFile(file) {
+      currentFile = file;
+      previewImg.src = URL.createObjectURL(file);
+      previewRow.classList.add('visible');
+      predictBtn.disabled = false;
+      hideStatus();
+      resetResult();
+    }
+
+    async function loadSample(path, label) {
+      try {
+        hideStatus();
+        const res = await fetch(path);
+        if (!res.ok) throw new Error('示例图片不存在');
+        const blob = await res.blob();
+        const file = new File([blob], path.split('/').pop(), { type: blob.type });
+        loadFile(file);
+        await predict();
+      } catch (err) {
+        showError('加载示例失败：' + err.message);
+      }
+    }
+
+    function resetResult() {
+      resultMain.textContent = '—';
+      resultMain.className = 'result-main';
+      catBar.style.width = '0%';
+      dogBar.style.width = '0%';
+      catPct.textContent = '0%';
+      dogPct.textContent = '0%';
+    }
+
+    function reset() {
+      currentFile = null;
+      fileInput.value = '';
+      previewRow.classList.remove('visible');
+      predictBtn.disabled = true;
+      hideStatus();
+      resetResult();
+    }
+
+    function hideStatus() {
+      statusLoading.classList.remove('visible');
+      statusError.classList.remove('visible');
+    }
+
+    function showError(msg) {
+      hideStatus();
+      errorMsg.textContent = msg;
+      statusError.classList.add('visible');
+    }
+
+    async function predict() {
+      if (!currentFile) return;
+      hideStatus();
+      predictBtn.disabled = true;
+      statusLoading.classList.add('visible');
+
+      const form = new FormData();
+      form.append('image', currentFile);
+
+      try {
+        const res = await fetch('/predict', { method: 'POST', body: form });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '请求失败');
+
+        const isCat = data.prediction === 'cats';
+        resultMain.textContent = isCat ? '猫 🐱' : '狗 🐶';
+        resultMain.className = 'result-main ' + (isCat ? 'cat' : 'dog');
+
+        const cat = (data.probabilities.cats * 100).toFixed(1);
+        const dog = (data.probabilities.dogs * 100).toFixed(1);
+        catBar.style.width = cat + '%';
+        dogBar.style.width = dog + '%';
+        catPct.textContent = cat + '%';
+        dogPct.textContent = dog + '%';
+      } catch (err) {
+        showError(err.message + ' — 请确认已运行 start.bat 启动服务');
+      } finally {
+        statusLoading.classList.remove('visible');
+        predictBtn.disabled = false;
+      }
+    }
+
+    SAMPLE_IMAGES.forEach(({ label, path }) => {
+      const btn = document.createElement('button');
+      btn.className = 'sample-btn';
+      btn.textContent = label;
+      btn.addEventListener('click', () => loadSample(path, label));
+      samplesEl.appendChild(btn);
+    });
+  </script>
+</body>
+</html>
