@@ -1,20 +1,26 @@
 <!DOCTYPE html>
+<!--
+  猫狗识别前端页面
+  功能：图片上传/拖拽、预览、调用后端 /predict 接口、展示分类结果与置信度
+  依赖：须先运行 server.py 或 start.bat 启动本地 Flask 服务
+-->
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>猫狗识别 · Cat vs Dog</title>
   <style>
+    /* ── 主题色变量：统一管理配色，方便整体换肤 ── */
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --border: #2a2f3d;
-      --text: #e8eaef;
-      --muted: #8b92a5;
-      --cat: #f59e0b;
-      --dog: #3b82f6;
-      --accent: #a78bfa;
-      --success: #34d399;
+      --bg: #f5f0e8;
+      --surface: #fffdf9;
+      --border: #e2d9cc;
+      --text: #3d3429;
+      --muted: #8a7e72;
+      --cat: #e07a3a;
+      --dog: #2a9d8f;
+      --accent: #c45c26;
+      --success: #40916c;
       --radius: 16px;
     }
 
@@ -28,13 +34,14 @@
       line-height: 1.6;
     }
 
+    /* 背景装饰光晕，不影响交互 */
     .bg-glow {
       position: fixed;
       inset: 0;
       pointer-events: none;
       background:
-        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(167, 139, 250, 0.12), transparent),
-        radial-gradient(ellipse 50% 35% at 80% 80%, rgba(59, 130, 246, 0.1), transparent);
+        radial-gradient(ellipse 60% 40% at 15% 8%, rgba(224, 122, 58, 0.14), transparent),
+        radial-gradient(ellipse 50% 35% at 85% 85%, rgba(42, 157, 143, 0.12), transparent);
       z-index: 0;
     }
 
@@ -71,8 +78,10 @@
       border-radius: var(--radius);
       padding: 28px;
       margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(61, 52, 41, 0.06);
     }
 
+    /* 上传区域：点击或拖拽均可触发文件选择 */
     .upload-zone {
       border: 2px dashed var(--border);
       border-radius: 12px;
@@ -85,7 +94,7 @@
     .upload-zone:hover,
     .upload-zone.dragover {
       border-color: var(--accent);
-      background: rgba(167, 139, 250, 0.06);
+      background: rgba(196, 92, 38, 0.06);
     }
 
     .upload-icon {
@@ -106,6 +115,7 @@
 
     #fileInput { display: none; }
 
+    /* 预览区默认隐藏，选中图片后通过 .visible 显示 */
     .preview-row {
       display: none;
       gap: 24px;
@@ -122,7 +132,8 @@
       flex: 0 0 280px;
       border-radius: 12px;
       overflow: hidden;
-      background: #000;
+      background: #ebe4da;
+      border: 1px solid var(--border);
       aspect-ratio: 1;
       display: flex;
       align-items: center;
@@ -154,6 +165,7 @@
       margin-bottom: 16px;
     }
 
+    /* 识别结果文字颜色随类别变化 */
     .result-main.cat { color: var(--cat); }
     .result-main.dog { color: var(--dog); }
 
@@ -201,9 +213,10 @@
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .btn-primary {
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #d4763a);
       color: #fff;
       margin-top: 16px;
+      box-shadow: 0 2px 8px rgba(196, 92, 38, 0.25);
     }
 
     .btn-primary:hover:not(:disabled) { opacity: 0.9; }
@@ -216,7 +229,7 @@
       margin-left: 8px;
     }
 
-    .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+    .btn-ghost:hover:not(:disabled) { color: var(--dog); border-color: var(--dog); background: rgba(42, 157, 143, 0.06); }
 
     .status {
       display: none;
@@ -228,9 +241,10 @@
       margin-top: 16px;
     }
 
+    /* 状态提示：加载中 / 错误信息 */
     .status.visible { display: flex; }
-    .status.loading { background: rgba(167, 139, 250, 0.1); color: var(--accent); }
-    .status.error { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+    .status.loading { background: rgba(42, 157, 143, 0.1); color: var(--dog); }
+    .status.error { background: rgba(196, 92, 38, 0.1); color: #b84a1e; }
 
     .spinner {
       width: 18px;
@@ -262,8 +276,9 @@
     }
 
     .sample-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
+      border-color: var(--cat);
+      color: var(--cat);
+      background: rgba(224, 122, 58, 0.08);
     }
 
     footer {
@@ -273,6 +288,7 @@
       margin-top: 32px;
     }
 
+    /* 移动端适配：预览图占满宽度 */
     @media (max-width: 600px) {
       .preview-img-wrap { flex: 1 1 100%; }
       header h1 { font-size: 1.5rem; }
@@ -282,11 +298,14 @@
 <body>
   <div class="bg-glow"></div>
   <div class="container">
+
+    <!-- 页头 -->
     <header>
       <h1>🐱 <span>猫狗识别</span> 🐶</h1>
       <p>基于 ResNet50 的图像分类模型 · 上传图片即可识别</p>
     </header>
 
+    <!-- 主功能区：上传 + 预览 + 识别结果 -->
     <div class="card">
       <div class="upload-zone" id="uploadZone">
         <div class="upload-icon">📷</div>
@@ -295,6 +314,7 @@
         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/*">
       </div>
 
+      <!-- 图片预览与识别结果面板 -->
       <div class="preview-row" id="previewRow">
         <div class="preview-img-wrap">
           <img id="previewImg" alt="预览">
@@ -326,6 +346,7 @@
       </div>
     </div>
 
+    <!-- 示例图片快捷按钮，无需本地上传即可体验 -->
     <div class="card">
       <div class="result-label">快速试用示例图片</div>
       <div class="samples" id="samples"></div>
@@ -335,6 +356,7 @@
   </div>
 
   <script>
+    // ── DOM 元素引用 ──────────────────────────────────────────
     const uploadZone = document.getElementById('uploadZone');
     const fileInput = document.getElementById('fileInput');
     const previewRow = document.getElementById('previewRow');
@@ -351,8 +373,10 @@
     const dogPct = document.getElementById('dogPct');
     const samplesEl = document.getElementById('samples');
 
+    // 当前待识别的图片文件（File 对象）
     let currentFile = null;
 
+    // 内置示例图片列表，路径相对于 Flask 静态文件服务
     const SAMPLE_IMAGES = [
       { label: '示例猫', path: 'newtest_set/cats/true.jpg' },
       { label: '示例狗', path: 'newtest_set/dogs/31723731_111324918104_2.jpg' },
@@ -360,8 +384,10 @@
       { label: '测试狗', path: 'test_set/dogs/dog.4001.jpg' },
     ];
 
+    // ── 上传交互：点击区域触发文件选择器 ────────────────────────
     uploadZone.addEventListener('click', () => fileInput.click());
 
+    // ── 拖拽上传：阻止默认行为并高亮上传区 ──────────────────────
     uploadZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       uploadZone.classList.add('dragover');
@@ -381,15 +407,24 @@
     predictBtn.addEventListener('click', predict);
     resetBtn.addEventListener('click', reset);
 
+    /**
+     * 加载用户选中的图片：生成预览 URL 并显示识别面板
+     * @param {File} file - 浏览器 File 对象
+     */
     function loadFile(file) {
       currentFile = file;
-      previewImg.src = URL.createObjectURL(file);
+      previewImg.src = URL.createObjectURL(file);  // 本地临时 URL，无需上传即可预览
       previewRow.classList.add('visible');
       predictBtn.disabled = false;
       hideStatus();
       resetResult();
     }
 
+    /**
+     * 加载内置示例图片并自动触发识别
+     * @param {string} path  - 示例图片相对路径
+     * @param {string} label - 按钮显示名称（未参与逻辑，保留供扩展）
+     */
     async function loadSample(path, label) {
       try {
         hideStatus();
@@ -404,6 +439,7 @@
       }
     }
 
+    /** 清空识别结果展示（置信度进度条归零） */
     function resetResult() {
       resultMain.textContent = '—';
       resultMain.className = 'result-main';
@@ -413,6 +449,7 @@
       dogPct.textContent = '0%';
     }
 
+    /** 重置整个上传状态，回到初始界面 */
     function reset() {
       currentFile = null;
       fileInput.value = '';
@@ -433,6 +470,10 @@
       statusError.classList.add('visible');
     }
 
+    /**
+     * 将当前图片 POST 到后端 /predict 接口，解析 JSON 并更新 UI
+     * 响应格式：{ prediction: "cats"|"dogs", probabilities: { cats, dogs } }
+     */
     async function predict() {
       if (!currentFile) return;
       hideStatus();
@@ -465,6 +506,7 @@
       }
     }
 
+    // 动态生成示例图片按钮
     SAMPLE_IMAGES.forEach(({ label, path }) => {
       const btn = document.createElement('button');
       btn.className = 'sample-btn';
