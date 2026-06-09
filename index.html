@@ -6,6 +6,7 @@
   <title>猫狗识别 · Cat vs Dog</title>
   <style>
     :root {
+<<<<<<< HEAD
       --bg: #f5f0e8;
       --surface: #fffdf9;
       --border: #e2d9cc;
@@ -15,6 +16,17 @@
       --dog: #2a9d8f;
       --accent: #c45c26;
       --success: #40916c;
+=======
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2f3d;
+      --text: #e8eaef;
+      --muted: #8b92a5;
+      --cat: #f59e0b;
+      --dog: #3b82f6;
+      --accent: #a78bfa;
+      --success: #34d399;
+>>>>>>> HTML
       --radius: 16px;
     }
 
@@ -33,8 +45,13 @@
       inset: 0;
       pointer-events: none;
       background:
+<<<<<<< HEAD
         radial-gradient(ellipse 60% 40% at 15% 8%, rgba(224, 122, 58, 0.14), transparent),
         radial-gradient(ellipse 50% 35% at 85% 85%, rgba(42, 157, 143, 0.12), transparent);
+=======
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(167, 139, 250, 0.12), transparent),
+        radial-gradient(ellipse 50% 35% at 80% 80%, rgba(59, 130, 246, 0.1), transparent);
+>>>>>>> HTML
       z-index: 0;
     }
 
@@ -71,7 +88,10 @@
       border-radius: var(--radius);
       padding: 28px;
       margin-bottom: 20px;
+<<<<<<< HEAD
       box-shadow: 0 4px 20px rgba(61, 52, 41, 0.06);
+=======
+>>>>>>> HTML
     }
 
     .upload-zone {
@@ -86,7 +106,11 @@
     .upload-zone:hover,
     .upload-zone.dragover {
       border-color: var(--accent);
+<<<<<<< HEAD
       background: rgba(196, 92, 38, 0.06);
+=======
+      background: rgba(167, 139, 250, 0.06);
+>>>>>>> HTML
     }
 
     .upload-icon {
@@ -123,8 +147,12 @@
       flex: 0 0 280px;
       border-radius: 12px;
       overflow: hidden;
+<<<<<<< HEAD
       background: #ebe4da;
       border: 1px solid var(--border);
+=======
+      background: #000;
+>>>>>>> HTML
       aspect-ratio: 1;
       display: flex;
       align-items: center;
@@ -203,10 +231,16 @@
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .btn-primary {
+<<<<<<< HEAD
       background: linear-gradient(135deg, var(--accent), #d4763a);
       color: #fff;
       margin-top: 16px;
       box-shadow: 0 2px 8px rgba(196, 92, 38, 0.25);
+=======
+      background: var(--accent);
+      color: #fff;
+      margin-top: 16px;
+>>>>>>> HTML
     }
 
     .btn-primary:hover:not(:disabled) { opacity: 0.9; }
@@ -219,7 +253,11 @@
       margin-left: 8px;
     }
 
+<<<<<<< HEAD
     .btn-ghost:hover:not(:disabled) { color: var(--dog); border-color: var(--dog); background: rgba(42, 157, 143, 0.06); }
+=======
+    .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+>>>>>>> HTML
 
     .status {
       display: none;
@@ -232,8 +270,13 @@
     }
 
     .status.visible { display: flex; }
+<<<<<<< HEAD
     .status.loading { background: rgba(42, 157, 143, 0.1); color: var(--dog); }
     .status.error { background: rgba(196, 92, 38, 0.1); color: #b84a1e; }
+=======
+    .status.loading { background: rgba(167, 139, 250, 0.1); color: var(--accent); }
+    .status.error { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+>>>>>>> HTML
 
     .spinner {
       width: 18px;
@@ -265,9 +308,14 @@
     }
 
     .sample-btn:hover {
+<<<<<<< HEAD
       border-color: var(--cat);
       color: var(--cat);
       background: rgba(224, 122, 58, 0.08);
+=======
+      border-color: var(--accent);
+      color: var(--accent);
+>>>>>>> HTML
     }
 
     footer {
